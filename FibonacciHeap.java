@@ -12,7 +12,7 @@ public class FibonacciHeap
 	private LinkedList<HeapNode> roots;
 	public int size;
 	public HeapNode min;
-	public int totalliknks;
+	public int totallinks;
 	public final int POS_VALUE = 1;
 	public int c;
 	
@@ -26,7 +26,7 @@ public class FibonacciHeap
 	{
 		this.min = null;
 		this.size = 0;
-		this.totalliknks = 0;
+		this.totallinks = 0;
 		this.c = c;
 		this.cuts = 0;
 		this.roots = new LinkedList<>();
@@ -54,6 +54,7 @@ public class FibonacciHeap
 			oldprev.next = insert_node;
 			if(this.min.key > key) {this.min = insert_node;}
 		}
+		this.roots.add(insert_node); 
 		this.size++;
 		return insert_node; 
 	}
@@ -76,9 +77,18 @@ public class FibonacciHeap
 	 */
 	public int deleteMin()
 	{
+		HeapNode tmp = this.min.prev;
+		this.min.prev = this.min.child.prev;
+		tmp.next = this.min.child;
+		this.min.prev.next = this.min;
+		tmp.next.prev = tmp;
+		cuts += this.min.rank;
 		
+
+
 		return 46; // R+W
 	}
+
 	/**
 	 * 
 	 * pre: 0<diff<x.key
@@ -93,34 +103,30 @@ public class FibonacciHeap
 		x.key -= diff;
 		if (x.key < this.min.key) {this.min = x;}
 		if(x.parent == null || x.key >= x.parent.key){return 0;}
-		boolean oldx_mark;
 		do { 
 			cuts++; //need to check
 			HeapNode parent = x.parent;
 			if(x.next == x){
-			parent.child = null;
-		}
-		else{
-			x.next.prev = x.prev;
-			x.prev.next = x.next;
-			 if (parent.child == x) {
-       			parent.child = x.next;
-   			}
-		}
-		HeapNode oldprev = this.min.prev;
-		x.next = this.min;
-		this.min.prev = x;
-		x.prev = oldprev;
-		oldprev.next = x;
-		parent.rank--;
-		x.parent = null;
-		x.mark = false;
-		parent.c++;
-		oldx_mark = parent.mark;
-		if(parent.c == this.c-1){parent.mark = true;}
-		numofchanges++;
-		x = parent;
-		} while(oldx_mark);
+				parent.child = null;
+			}
+			else{
+				x.next.prev = x.prev;
+				x.prev.next = x.next;
+				if(parent.child == x) {
+       				parent.child = x.next;
+   				}
+			}
+			HeapNode oldprev = this.min.prev;
+			x.next = this.min;
+			this.min.prev = x;
+			x.prev = oldprev;
+			oldprev.next = x;
+			parent.rank--; 
+			x.parent = null;
+			if(parent.parent != null) {parent.c++;}
+			x = parent;
+			numofchanges++;
+		} while(x.c - 1 == this.c);
 		return numofchanges; 
 	}
 
@@ -143,7 +149,7 @@ public class FibonacciHeap
 	 */
 	public int totalLinks()
 	{
-		return this.totalliknks; 
+		return this.totallinks; 
 	}
 
 	/**
@@ -163,8 +169,17 @@ public class FibonacciHeap
 	 */
 	public void meld(FibonacciHeap heap2)
 	{
-		this.roots.addLast(heap2.roots.get(0));
-		heap2.roots = new LinkedList<>();	
+		if(this.min == null){this.min = heap2.min;}
+		else if(heap2.min == null){return;}
+		else{
+			HeapNode thisMinPrev = this.min.prev;
+			HeapNode otherMinPrev = heap2.min.prev;
+			this.min.prev = otherMinPrev;
+			otherMinPrev.next = this.min;
+			thisMinPrev.next = heap2.min;
+			heap2.min.prev = thisMinPrev;	
+		}
+		heap2.min = null;
 	}
 
 	/**
@@ -200,18 +215,16 @@ public class FibonacciHeap
 		public HeapNode prev;
 		public HeapNode parent;
 		public int rank;
-		public boolean mark;
 
 		public HeapNode(int key, String info) {
 			this.c = 0;
 			this.key = key;
 			this.info = info;
 			this.child = null;
-			this.next = null;
-			this.prev = null;
+			this.next = this;
+			this.prev = this;
 			this.parent = null;
 			this.rank = 0;
-			this.mark = false;
 		}
 	}
 }
