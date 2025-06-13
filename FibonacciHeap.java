@@ -1,5 +1,3 @@
-import java.util.LinkedList;
-
 /**
  * FibonacciHeap
  *
@@ -9,12 +7,12 @@ import java.util.LinkedList;
 public class FibonacciHeap
 {
 	private int cuts;
-	private LinkedList<HeapNode> roots;
 	public int size;
 	public HeapNode min;
 	public int totallinks;
 	public final int POS_VALUE = 1;
 	public int c;
+	public int numOfTrees;
 	
 	/**
 	 *
@@ -29,7 +27,7 @@ public class FibonacciHeap
 		this.totallinks = 0;
 		this.c = c;
 		this.cuts = 0;
-		this.roots = new LinkedList<>();
+		this.numOfTrees = 0;
 	}
 
 	/**
@@ -53,8 +51,7 @@ public class FibonacciHeap
 			insert_node.prev = oldprev;
 			oldprev.next = insert_node;
 			if(this.min.key > key) {this.min = insert_node;}
-		}
-		this.roots.add(insert_node); 
+		} 
 		this.size++;
 		return insert_node; 
 	}
@@ -77,16 +74,30 @@ public class FibonacciHeap
 	 */
 	public int deleteMin()
 	{
-		HeapNode tmp = this.min.prev;
-		this.min.prev = this.min.child.prev;
-		tmp.next = this.min.child;
-		this.min.prev.next = this.min;
-		tmp.next.prev = tmp;
-		cuts += this.min.rank;
+		HeapNode heapmin = this.min;
+		if(this.size == 1){
+			this.min.next = this.min.prev = this.min = null;
+			return 0;
+		}
+		if(heapmin == null){return 0;}
+		if(heapmin.child != null){ //deleteing the min
+			HeapNode current = heapmin.child;
+			do{
+				current.parent = null;
+				current = current.next;
+			}while(current != heapmin.child);
+			HeapNode tmp = this.min.prev;
+			this.min.prev = this.min.child.prev;
+			tmp.next = this.min.child;
+			this.min.prev.next = this.min;
+			tmp.next.prev = tmp;
+		}
+		heapmin.prev.next = heapmin.next;
+		heapmin.next.prev = heapmin.prev;
+		//Successive linking
 		
-
-
-		return 46; // R+W
+		//
+		return this.totallinks; 
 	}
 
 	/**
@@ -169,6 +180,8 @@ public class FibonacciHeap
 	 */
 	public void meld(FibonacciHeap heap2)
 	{
+		this.cuts += heap2.cuts;
+		this.totallinks += heap2.totallinks;
 		if(this.min == null){this.min = heap2.min;}
 		else if(heap2.min == null){return;}
 		else{
@@ -199,7 +212,23 @@ public class FibonacciHeap
 	 */
 	public int numTrees()
 	{
-		return this.roots.size(); 
+		return this.numOfTrees; 
+	}
+
+	// Inside FibonacciHeap, before the final closing brace:
+	@Override
+	public String toString() {
+    	if (min == null) return "[]";
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("[");
+    	HeapNode curr = min;
+    	do {
+        	sb.append(curr.toString());
+        	curr = curr.next;
+        	if (curr != min) sb.append(", ");
+    	} while (curr != min);
+    	sb.append("]");
+    	return sb.toString();
 	}
 
 	/**
@@ -226,6 +255,38 @@ public class FibonacciHeap
 			this.parent = null;
 			this.rank = 0;
 		}
+
+		// Inside the static class HeapNode, before its closing brace:
+	@Override
+	public String toString() {
+    	StringBuilder sb = new StringBuilder();
+    	// print the key and optional info
+    	sb.append(key);
+    	if (info != null && !info.isEmpty()) {
+      	  sb.append("(").append(info).append(")");
+    	}
+    	// if this node has children, recurse into them
+    	if (child != null) {
+        	sb.append("{");
+			HeapNode childNode = child;
+			do {
+				sb.append(childNode.toString());
+				childNode = childNode.next;
+				if (childNode != child) sb.append(", ");
+			} while (childNode != child);
+        	sb.append("}");
+    	}
+    	return sb.toString();
+	}
+	}
+	public static void main(String[] args) {
+		FibonacciHeap heap = new FibonacciHeap(2);
+		heap.insert(10, "10");
+		heap.insert(20, "10");
+		heap.insert(30, "10");
+		heap.insert(40, "10");
+		heap.deleteMin();
+		System.out.println(heap);
 	}
 }
 
